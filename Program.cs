@@ -1,10 +1,10 @@
 ﻿Console.WriteLine("Start");
 
 var watch = System.Diagnostics.Stopwatch.StartNew();
-var stops = GtfsParser.ParseFile("PID_GTFS/stops.txt");
-var trips = GtfsParser.ParseFile("PID_GTFS/trips.txt");
-var routes = GtfsParser.ParseFile("PID_GTFS/routes.txt");
-var stopTimes = GtfsParser.ParseFile("PID_GTFS/stop_times.txt", 4);
+var stops = GtfsParser.ParseFile("input/stops.txt");
+var trips = GtfsParser.ParseFile("input/trips.txt");
+var routes = GtfsParser.ParseFile("input/routes.txt");
+var stopTimes = GtfsParser.ParseFile("input/stop_times.txt", 4);
 watch.Stop();
 Console.WriteLine($"Took {watch.Elapsed.TotalSeconds}s");
 

@@ -1,29 +1,5 @@
-/*public class LineReader {
-    FileStream fileStream;
-    StreamReader streamReader;
-    public LineReader(string fileName) {
-        fileStream = File.OpenRead(fileName);
-        streamReader = new StreamReader(fileStream);
-    }
-
-    public string? ReadLine() {
-        lock (streamReader) {
-            if (fileStream.CanRead) {
-                return streamReader.ReadLine();
-            }
-        }
-        return null;
-    }
-    
-    public void Close() {
-        streamReader.Close();
-        fileStream.Close();
-    }
-
-    ~LineReader() {
-        Close();
-    }
-}*/
+using System.Reflection;
+using System.Runtime.Serialization;
 
 public class LineReader {
     private string[] lines;
@@ -44,13 +20,12 @@ public class LineReader {
 
 
 static class GtfsParser {
-    public static List<GtfsObject> ParseFile(string fileName, int threadCount = 1) {
+    public static List<T> ParseFile<T>(string fileName, int threadCount = 1) {
         var lineReader = new LineReader(fileName);
-        var values = new List<String>[lineReader.size-1];
         var props = lineReader.ReadLine().Split(',');
         int pos = 0;
 
-        var results = new List<GtfsObject>();
+        var results = new List<T>(lineReader.size-1);
 
         for (int i = 0; i < threadCount; i++)
         {
@@ -59,26 +34,30 @@ static class GtfsParser {
 
         while (threadCount != 0) {
             Thread.Sleep(10);
-        } 
-
-        for (int i = 0; i < values.Length; i++)
-        {
-            var o = new GtfsObject();
-            for (int j = 0; j < props.Length; j++)
-            {
-                o.Add(props[j], values[i][j]);
-            }
-            results.Add(o);
         }
+
         return results;
 
-        void doWork(object? obj) {
+        void doWork(object? state) {
             while (true) {
                 string? line = lineReader.ReadLine();
                 if (line == null) break;
                 else {
                     var v = ParseLine(line);
-                    values[Interlocked.Increment(ref pos)-1] = v;
+                    T obj = (T)FormatterServices.GetUninitializedObject(typeof(T));
+                    foreach (var p in typeof(T).GetProperties()) {
+                        var attr = p.GetCustomAttribute<GtfsProperty>(false);
+                        for (int j = 0; j < props.Length; j++)
+                        {
+                            if ((attr == null && p.Name == props[j]) || attr?.name == props[j]) {
+                                if ()
+                                var methods = p.PropertyType.GetMethods(BindingFlags.Public | BindingFlags.Static);
+                                p.PropertyType
+                                p.SetValue(obj, v[j]);
+                            }
+                        }
+                    }
+                    results[Interlocked.Increment(ref pos)-1] = obj;
                 }
             }
             Interlocked.Decrement(ref threadCount);
@@ -135,6 +114,19 @@ static class GtfsParser {
         return new TimeOnly(h%24, m%60, s%60);
     }
 }
+
+
+public delegate object GtfsPropertyConstructor(string s);
+public class GtfsProperty : Attribute
+{
+    public string name;
+    public GtfsProperty (string propName)
+    {
+        this.name = propName;
+    }
+}
+
+
 class GtfsObject: Dictionary<string, string> {
     public override string ToString() {
         var s = "{";
